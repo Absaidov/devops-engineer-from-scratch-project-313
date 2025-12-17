@@ -2,6 +2,8 @@
 
 ### Hexlet tests and linter status:
 [![Actions Status](https://github.com/Absaidov/devops-engineer-from-scratch-project-313/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/Absaidov/devops-engineer-from-scratch-project-313/actions)
+### Badge of My workflow
+[![PaaS](https://github.com/Absaidov/devops-engineer-from-scratch-project-313/actions/workflows/main.yml/badge.svg)](https://github.com/Absaidov/devops-engineer-from-scratch-project-313/actions/workflows/main.yml)
 
 
 ## Установка Python
