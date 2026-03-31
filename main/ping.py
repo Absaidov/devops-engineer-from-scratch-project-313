@@ -10,4 +10,4 @@ def ping():
 
 @app.get("/fail")
 def fail():
-    raise HTTPException(status_code=400, detail="Что-то пошло не так")
+    raise HTTPException(status_code=400, detail="Something went wrong?")

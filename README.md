@@ -1,9 +1,8 @@
 # Проект Деплой приложения на PaaS
 
-### Hexlet tests and linter status:
-[![Actions Status](https://github.com/Absaidov/devops-engineer-from-scratch-project-313/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/Absaidov/devops-engineer-from-scratch-project-313/actions)
-### Badge of My workflow
-[![PaaS](https://github.com/Absaidov/devops-engineer-from-scratch-project-313/actions/workflows/main.yml/badge.svg)](https://github.com/Absaidov/devops-engineer-from-scratch-project-313/actions/workflows/main.yml)
+### Status
+[![CI](https://github.com/Absaidov/devops-engineer-from-scratch-project-313/actions/workflows/main.yml/badge.svg)](https://github.com/Absaidov/devops-engineer-from-scratch-project-313/actions/workflows/main.yml)
+[![Hexlet Check](https://github.com/Absaidov/devops-engineer-from-scratch-project-313/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/Absaidov/devops-engineer-from-scratch-project-313/actions/workflows/hexlet-check.yml)
 
 
 ## Установка Python
@@ -54,13 +53,23 @@
   cd devops-engineer-from-scratch-project-313
 ```
 
-## Выполняем команду
+## Запуск приложения
+
+Выполните команду:
+
 ```bash
-  make start
+make run
 ```
 
-## Смотрим на мое творение по данной ссылке в браузере и радуемся за меня
+Приложение будет доступно по адресу:
+
 ```bash
-  http://127.0.0.1:8080/ping
+http://127.0.0.1:8080/ping
+```
+
+Для запуска в production-режиме используйте:
+
+```bash
+make start
 ```
 
