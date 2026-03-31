@@ -2,9 +2,16 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Установка uv
+RUN pip install --no-cache-dir uv
+
+# Копируем pyproject.toml и устанавливаем зависимости через uv
+COPY pyproject.toml .
+RUN uv sync --frozen
+
 COPY . .
 
-RUN pip install --no-cache-dir uv && uv pip install -e .
+RUN uv pip install --system -e .
 
 EXPOSE 8000
 
