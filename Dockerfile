@@ -1,12 +1,14 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
 # Установка uv
 RUN pip install --no-cache-dir uv
 
-# Копируем pyproject.toml и устанавливаем зависимости через uv
-COPY pyproject.toml .
+# Копируем pyproject.toml и uv.lock
+COPY pyproject.toml uv.lock ./
+
+# Создаём виртуальное окружение и устанавливаем зависимости
 RUN uv sync --frozen
 
 COPY . .
