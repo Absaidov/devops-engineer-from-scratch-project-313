@@ -27,4 +27,8 @@ def fail():
 
 @app.get("/sentry-debug")
 def trigger_error():
+    """
+    Эндпоинт для тестирования интеграции Sentry.
+    Генерирует ZeroDivisionError для проверки отправки ошибок.
+    """
     return 1 / 0
