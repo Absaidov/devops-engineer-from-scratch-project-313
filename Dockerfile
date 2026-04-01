@@ -15,6 +15,6 @@ COPY . .
 
 RUN uv pip install --system -e .
 
-EXPOSE 8000
+EXPOSE $PORT
 
-CMD ["uv", "run", "uvicorn", "main.ping:app", "--host", "127.0.0.1", "--port", "8080"]
+CMD ["uv", "run", "uvicorn", "main.ping:app", "--host", "0.0.0.0", "--port", "${PORT}"]
