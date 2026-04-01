@@ -7,5 +7,8 @@ start:
 lint:
 	uv run ruff check main
 
+lint-fix:
+	uv run ruff check main --fix
+
 test:
 	uv run pytest

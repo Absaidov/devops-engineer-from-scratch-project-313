@@ -1,6 +1,7 @@
 import os
-from fastapi import FastAPI, HTTPException
+
 import sentry_sdk
+from fastapi import FastAPI, HTTPException
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 
 # Инициализация Sentry
@@ -22,3 +23,8 @@ def ping():
 @app.get("/fail")
 def fail():
     raise HTTPException(status_code=400, detail="Something went wrong?")
+
+
+@app.get("/sentry-debug")
+def trigger_error():
+    return 1 / 0
