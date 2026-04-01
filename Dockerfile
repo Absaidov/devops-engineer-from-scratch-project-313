@@ -17,4 +17,5 @@ RUN uv pip install --system -e .
 
 EXPOSE $PORT
 
-CMD ["uv", "run", "uvicorn", "main.ping:app", "--host", "0.0.0.0", "--port", "${PORT}"]
+#CMD ["uv", "run", "uvicorn", "main.ping:app", "--host", "0.0.0.0", "--port", "${PORT}"]
+CMD sh -c "uv run uvicorn main:app --host 0.0.0.0 --port $PORT"
