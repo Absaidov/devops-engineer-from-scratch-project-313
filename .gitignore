@@ -30,3 +30,4 @@ Thumbs.db
 
 # UV specific
 .uv/
+.continue
