@@ -73,3 +73,11 @@ http://127.0.0.1:8080/ping
 make start
 ```
 
+## Простое API, которое отвечает `"pong"` на `/ping`
+
+
+[![Посмотреть](https://img.shields.io/badge/🌐%20Посмотреть_-blue?style=for-the-badge)](https://devops-engineer-from-scratch-project-313-rq7w.onrender.com/ping)
+
+## Специальный эндпоинт для отслеживания ошибок на Sentry
+[![Посмотреть_ошибку](https://img.shields.io/badge/🌐%20Посмотреть_ошибку-blue?style=for-the-badge)](https://devops-engineer-from-scratch-project-313-rq7w.onrender.com/sentry-debug)
+
