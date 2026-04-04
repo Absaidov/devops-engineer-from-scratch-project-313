@@ -1,1 +1,1 @@
-from .ping import app
+from .ping import app, create_app

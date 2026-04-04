@@ -1,9 +1,9 @@
 # Проект Деплой приложения на PaaS
 
-### Status
+## Status
+
 [![CI](https://github.com/Absaidov/devops-engineer-from-scratch-project-313/actions/workflows/main.yml/badge.svg)](https://github.com/Absaidov/devops-engineer-from-scratch-project-313/actions/workflows/main.yml)
 [![Hexlet Check](https://github.com/Absaidov/devops-engineer-from-scratch-project-313/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/Absaidov/devops-engineer-from-scratch-project-313/actions/workflows/hexlet-check.yml)
-
 
 ## Установка Python
 
@@ -14,7 +14,8 @@
   Linux (WSL). О том, как это сделать написано тут
   [гайд](https://ru.hexlet.io/blog/posts/ubuntu-linux-in-windows/).
 
-## Установлен ли у Вас Python. Проверить это можно, выполнив команду:
+## Установлен ли у Вас Python. Проверить это можно, выполнив команду
+
 ```bash
   python3 -V
 ```
@@ -32,23 +33,29 @@
 ```bash
   sudo apt install python3
 ```
+
 ## Теперь когда Python установлен устанавливаем утилиту uv
+
 ## MacOS и Linux
+
 ```bash
   curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 ## Ставим зависимости (FAST API и сервер uvicorn)
+
 ```bash
   uv add fastapi "uvicorn[standard]"
 ```
 
 ## Клонируем репозиторий локально
+
 ```bash
   git clone git@github.com:Absaidov/devops-engineer-from-scratch-project-313.git
 ```
 
 ## Переходим в директорию
+
 ```bash
   cd devops-engineer-from-scratch-project-313
 ```
@@ -75,9 +82,8 @@ make start
 
 ## Простое API, которое отвечает `"pong"` на `/ping`
 
-
 [![Посмотреть](https://img.shields.io/badge/🌐%20Посмотреть_-blue?style=for-the-badge)](https://devops-engineer-from-scratch-project-313-rq7w.onrender.com/ping)
 
 ## Специальный эндпоинт для отслеживания ошибок на Sentry
-[![Посмотреть_ошибку](https://img.shields.io/badge/🌐%20Посмотреть_ошибку-blue?style=for-the-badge)](https://devops-engineer-from-scratch-project-313-rq7w.onrender.com/sentry-debug)
 
+[![Посмотреть_ошибку](https://img.shields.io/badge/🌐%20Посмотреть_ошибку-blue?style=for-the-badge)](https://devops-engineer-from-scratch-project-313-rq7w.onrender.com/sentry-debug)
