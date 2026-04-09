@@ -1,3 +1,4 @@
+import json
 import os
 from contextlib import asynccontextmanager
 from typing import Generator
@@ -9,11 +10,13 @@ from fastapi import (
     Depends,
     FastAPI,
     HTTPException,
+    Query,
     Request,
     Response,
     status,
 )
 from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, SQLModel, create_engine, select
 
@@ -23,6 +26,7 @@ load_dotenv()
 
 SHORT_NAME_CONFLICT = "short_name already exists"
 LINK_NOT_FOUND = "Link not found"
+INVALID_RANGE = "Invalid range parameter"
 
 # Инициализация Sentry
 sentry_sdk.init(
@@ -93,6 +97,44 @@ def get_session(request: Request) -> Generator[Session, None, None]:
         yield session
 
 
+def parse_range_param(range_param: str | None) -> tuple[int, int]:
+    if range_param is None:
+        return 0, 0
+
+    try:
+        parsed = json.loads(range_param)
+    except json.JSONDecodeError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=INVALID_RANGE,
+        ) from error
+
+    if not isinstance(parsed, list) or len(parsed) != 2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=INVALID_RANGE,
+        )
+
+    start, end = parsed
+    if not isinstance(start, int) or isinstance(start, bool):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=INVALID_RANGE,
+        )
+    if not isinstance(end, int) or isinstance(end, bool):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=INVALID_RANGE,
+        )
+    if start < 0 or end < start:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=INVALID_RANGE,
+        )
+
+    return start, end
+
+
 @router.get("/ping")
 def ping():
     return "pong"
@@ -100,10 +142,25 @@ def ping():
 
 @router.get("/api/links", response_model=list[LinkRead])
 def list_links(
+    response: Response,
     request: Request,
+    range_param: str | None = Query(default=None, alias="range"),
     session: Session = Depends(get_session),
 ) -> list[LinkRead]:
-    links = session.exec(select(Link).order_by(Link.id)).all()
+    total_links = session.exec(select(func.count()).select_from(Link)).one()
+    start, end = parse_range_param(range_param)
+    links_query = select(Link).order_by(Link.id)
+
+    if range_param is not None:
+        links_query = links_query.offset(start).limit(end - start)
+        content_range = f"links {start}-{end}/{total_links}"
+    else:
+        content_range_end = total_links if total_links > 0 else 0
+        content_range = f"links 0-{content_range_end}/{total_links}"
+
+    links = session.exec(links_query).all()
+    response.headers["Accept-Ranges"] = "links"
+    response.headers["Content-Range"] = content_range
     return [
         serialize_link(link=link, base_url=request.app.state.base_url)
         for link in links

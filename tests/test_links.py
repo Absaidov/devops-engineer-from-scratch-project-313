@@ -1,5 +1,6 @@
 CONFLICT_RESPONSE = {"detail": "short_name already exists"}
 NOT_FOUND_RESPONSE = {"detail": "Link not found"}
+INVALID_RANGE_RESPONSE = {"detail": "Invalid range parameter"}
 
 
 def create_link(client, original_url: str, short_name: str):
@@ -9,10 +10,21 @@ def create_link(client, original_url: str, short_name: str):
     )
 
 
+def seed_links(client, amount: int):
+    for index in range(amount):
+        create_link(
+            client=client,
+            original_url=f"https://example.com/{index}",
+            short_name=f"seed-{index}",
+        )
+
+
 def test_list_links_returns_empty_list(client):
     response = client.get("/api/links")
 
     assert response.status_code == 200
+    assert response.headers["accept-ranges"] == "links"
+    assert response.headers["content-range"] == "links 0-0/0"
     assert response.json() == []
 
 
@@ -47,6 +59,8 @@ def test_list_links_returns_all_links(client):
     response = client.get("/api/links")
 
     assert response.status_code == 200
+    assert response.headers["accept-ranges"] == "links"
+    assert response.headers["content-range"] == "links 0-2/2"
     assert response.json() == [
         {
             "id": 1,
@@ -61,6 +75,40 @@ def test_list_links_returns_all_links(client):
             "short_url": "https://short.io/r/exmpl2",
         },
     ]
+
+
+def test_list_links_supports_pagination_from_start(client):
+    seed_links(client=client, amount=11)
+
+    response = client.get("/api/links?range=[0,10]")
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert response.headers["accept-ranges"] == "links"
+    assert response.headers["content-range"] == "links 0-10/11"
+    assert len(payload) == 10
+    assert payload[0]["id"] == 1
+    assert payload[-1]["id"] == 10
+
+
+def test_list_links_supports_pagination_with_offset(client):
+    seed_links(client=client, amount=11)
+
+    response = client.get("/api/links?range=[5,10]")
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert response.headers["accept-ranges"] == "links"
+    assert response.headers["content-range"] == "links 5-10/11"
+    assert len(payload) == 5
+    assert [item["id"] for item in payload] == [6, 7, 8, 9, 10]
+
+
+def test_list_links_with_invalid_range_returns_400(client):
+    response = client.get("/api/links?range=broken")
+
+    assert response.status_code == 400
+    assert response.json() == INVALID_RANGE_RESPONSE
 
 
 def test_get_link_by_id(client):
