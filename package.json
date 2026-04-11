@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "backend": "make run",
+    "frontend": "make frontend",
+    "dev": "make dev"
+  },
+  "dependencies": {
+    "@hexlet/project-devops-deploy-crud-frontend": "^1.0.4"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

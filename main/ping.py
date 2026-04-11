@@ -15,6 +15,7 @@ from fastapi import (
     Response,
     status,
 )
+from fastapi.middleware.cors import CORSMiddleware
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
@@ -27,6 +28,7 @@ load_dotenv()
 SHORT_NAME_CONFLICT = "short_name already exists"
 LINK_NOT_FOUND = "Link not found"
 INVALID_RANGE = "Invalid range parameter"
+DEFAULT_CORS_ORIGIN = "http://localhost:5173"
 
 # Инициализация Sentry
 sentry_sdk.init(
@@ -63,6 +65,19 @@ def get_base_url(explicit_base_url: str | None = None) -> str:
         return env_base_url.rstrip("/")
     port = os.getenv("PORT", "8080")
     return f"http://127.0.0.1:{port}"
+
+
+def get_cors_origins() -> list[str]:
+    raw_origins = os.getenv("CORS_ORIGINS")
+    if raw_origins:
+        parsed_origins = [
+            item.strip().rstrip("/")
+            for item in raw_origins.split(",")
+            if item.strip()
+        ]
+        if parsed_origins:
+            return parsed_origins
+    return [DEFAULT_CORS_ORIGIN]
 
 
 def build_short_url(base_url: str, short_name: str) -> str:
@@ -278,6 +293,13 @@ def create_app(
         yield
 
     application = FastAPI(lifespan=lifespan)
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=get_cors_origins(),
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["*"],
+    )
     application.include_router(router)
     return application
 

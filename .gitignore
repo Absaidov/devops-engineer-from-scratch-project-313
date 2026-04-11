@@ -32,4 +32,7 @@ Thumbs.db
 .uv/
 .continue
 .env
+
+# Node.js
+node_modules/
 /.env.example
