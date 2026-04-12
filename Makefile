@@ -3,7 +3,7 @@ BACKEND_PORT ?= 8080
 API_URL ?= http://127.0.0.1:$(BACKEND_PORT)
 
 run:
-	uv run uvicorn main:app --reload --port $(BACKEND_PORT)
+	uv run uvicorn main:app --host 0.0.0.0 --port $(BACKEND_PORT)
 
 start:
 	uv run uvicorn main:app --host 127.0.0.1 --port $(BACKEND_PORT)
