@@ -30,8 +30,8 @@ RUN npm ci
 # Копируем код приложения
 COPY . .
 
-# Устанавливаем приложение в систему Python
-RUN uv pip install --system -e .
+# # Устанавливаем приложение в систему Python
+# RUN uv pip install --system -e .
 
 # Копируем frontend-статику туда, откуда ее будет отдавать nginx
 RUN mkdir -p /app/public \
