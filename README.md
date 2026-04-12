@@ -80,6 +80,12 @@ http://127.0.0.1:8080/ping
 make start
 ```
 
+
+## Посмотреть развернутый сайт на Render
+
+[![Посмотреть](https://img.shields.io/badge/🌐%20Посмотреть_-blue?style=for-the-badge)](https://devops-engineer-from-scratch-project-313-rq7w.onrender.com/#/links)
+
+
 ## Простое API, которое отвечает `"pong"` на `/ping`
 
 [![Посмотреть](https://img.shields.io/badge/🌐%20Посмотреть_-blue?style=for-the-badge)](https://devops-engineer-from-scratch-project-313-rq7w.onrender.com/ping)
