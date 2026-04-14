@@ -1,3 +1,12 @@
+FROM node:20-alpine AS frontend
+
+WORKDIR /frontend
+
+COPY package.json package-lock.json ./
+RUN npm ci
+RUN mkdir -p /frontend/public \
+    && cp -r ./node_modules/@hexlet/project-devops-deploy-crud-frontend/dist/. /frontend/public/
+
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -12,30 +21,17 @@ RUN apt-get update \
 # Ставим uv
 RUN pip install --no-cache-dir uv
 
-# Ставим Node.js, чтобы получить собранный frontend из npm-пакета
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends nodejs npm \
-    && rm -rf /var/lib/apt/lists/*
-
-# Сначала копируем файлы зависимостей Python и Node
+# Сначала копируем файлы зависимостей Python
 COPY pyproject.toml uv.lock ./
-COPY package.json package-lock.json ./
 
 # Ставим Python-зависимости
 RUN uv sync --frozen
 
-# Ставим npm-зависимости, в том числе пакет с уже собранным UI
-RUN npm ci
-
 # Копируем код приложения
 COPY . .
 
-# # Устанавливаем приложение в систему Python
-# RUN uv pip install --system -e .
-
-# Копируем frontend-статику туда, откуда ее будет отдавать nginx
-RUN mkdir -p /app/public \
-    && cp -r ./node_modules/@hexlet/project-devops-deploy-crud-frontend/dist/. /app/public/
+# Копируем frontend-статику из frontend stage
+COPY --from=frontend /frontend/public /app/public
 
 # Удаляем дефолтный nginx-конфиг
 RUN rm -f /etc/nginx/sites-enabled/default
