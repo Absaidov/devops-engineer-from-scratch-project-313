@@ -1,33 +1,17 @@
-import json
 import os
 from contextlib import asynccontextmanager
-from typing import Generator
 
 import sentry_sdk
 from dotenv import load_dotenv
-from fastapi import (
-    APIRouter,
-    Depends,
-    FastAPI,
-    HTTPException,
-    Query,
-    Request,
-    Response,
-    status,
-)
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sentry_sdk.integrations.fastapi import FastApiIntegration
-from sqlalchemy import func
-from sqlalchemy.exc import IntegrityError
-from sqlmodel import Session, SQLModel, create_engine, select
+from sqlmodel import SQLModel, create_engine
 
-from .models import Link, LinkCreate, LinkRead, LinkUpdate
+from .routers import debug_router, links_router, ping_router
 
 load_dotenv()
 
-SHORT_NAME_CONFLICT = "short_name already exists"
-LINK_NOT_FOUND = "Link not found"
-INVALID_RANGE = "Invalid range parameter"
 DEFAULT_CORS_ORIGIN = "http://localhost:5173"
 
 # Инициализация Sentry
@@ -37,8 +21,6 @@ sentry_sdk.init(
     traces_sample_rate=1.0,  # Для трейсинга запросов (опционально)
     send_default_pii=True,  # Отправлять ли данные пользователей (IP, заголовки)
 )
-
-router = APIRouter()
 
 
 def normalize_database_url(url: str) -> str:
@@ -80,197 +62,6 @@ def get_cors_origins() -> list[str]:
     return [DEFAULT_CORS_ORIGIN]
 
 
-def build_short_url(base_url: str, short_name: str) -> str:
-    return f"{base_url}/r/{short_name}"
-
-
-def serialize_link(link: Link, base_url: str) -> LinkRead:
-    return LinkRead(
-        id=link.id,
-        original_url=link.original_url,
-        short_name=link.short_name,
-        short_url=build_short_url(base_url, link.short_name),
-    )
-
-
-def raise_link_not_found() -> None:
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=LINK_NOT_FOUND,
-    )
-
-
-def raise_short_name_conflict() -> None:
-    raise HTTPException(
-        status_code=status.HTTP_409_CONFLICT,
-        detail=SHORT_NAME_CONFLICT,
-    )
-
-
-def get_session(request: Request) -> Generator[Session, None, None]:
-    with Session(request.app.state.engine) as session:
-        yield session
-
-
-def parse_range_param(range_param: str | None) -> tuple[int, int]:
-    if range_param is None:
-        return 0, 0
-
-    try:
-        parsed = json.loads(range_param)
-    except json.JSONDecodeError as error:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=INVALID_RANGE,
-        ) from error
-
-    if not isinstance(parsed, list) or len(parsed) != 2:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=INVALID_RANGE,
-        )
-
-    start, end = parsed
-    if not isinstance(start, int) or isinstance(start, bool):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=INVALID_RANGE,
-        )
-    if not isinstance(end, int) or isinstance(end, bool):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=INVALID_RANGE,
-        )
-    if start < 0 or end < start:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=INVALID_RANGE,
-        )
-
-    return start, end
-
-
-@router.get("/ping")
-def ping():
-    return "pong"
-
-
-@router.get("/api/links", response_model=list[LinkRead])
-def list_links(
-    response: Response,
-    request: Request,
-    range_param: str | None = Query(default=None, alias="range"),
-    session: Session = Depends(get_session),
-) -> list[LinkRead]:
-    total_links = session.exec(select(func.count()).select_from(Link)).one()
-    start, end = parse_range_param(range_param)
-    links_query = select(Link).order_by(Link.id)
-
-    if range_param is not None:
-        links_query = links_query.offset(start).limit(end - start)
-        content_range = f"links {start}-{end}/{total_links}"
-    else:
-        content_range_end = total_links if total_links > 0 else 0
-        content_range = f"links 0-{content_range_end}/{total_links}"
-
-    links = session.exec(links_query).all()
-    response.headers["Accept-Ranges"] = "links"
-    response.headers["Content-Range"] = content_range
-    return [
-        serialize_link(link=link, base_url=request.app.state.base_url)
-        for link in links
-    ]
-
-
-@router.post(
-    "/api/links",
-    response_model=LinkRead,
-    status_code=status.HTTP_201_CREATED,
-)
-def create_link(
-    payload: LinkCreate,
-    request: Request,
-    session: Session = Depends(get_session),
-) -> LinkRead:
-    link = Link(
-        original_url=payload.original_url,
-        short_name=payload.short_name,
-    )
-    session.add(link)
-    try:
-        session.commit()
-    except IntegrityError:
-        session.rollback()
-        raise_short_name_conflict()
-    session.refresh(link)
-    return serialize_link(link=link, base_url=request.app.state.base_url)
-
-
-@router.get("/api/links/{link_id}", response_model=LinkRead)
-def get_link_by_id(
-    link_id: int,
-    request: Request,
-    session: Session = Depends(get_session),
-) -> LinkRead:
-    link = session.get(Link, link_id)
-    if link is None:
-        raise_link_not_found()
-    return serialize_link(link=link, base_url=request.app.state.base_url)
-
-
-@router.put("/api/links/{link_id}", response_model=LinkRead)
-def update_link(
-    link_id: int,
-    payload: LinkUpdate,
-    request: Request,
-    session: Session = Depends(get_session),
-) -> LinkRead:
-    link = session.get(Link, link_id)
-    if link is None:
-        raise_link_not_found()
-
-    link.original_url = payload.original_url
-    link.short_name = payload.short_name
-    session.add(link)
-    try:
-        session.commit()
-    except IntegrityError:
-        session.rollback()
-        raise_short_name_conflict()
-    session.refresh(link)
-    return serialize_link(link=link, base_url=request.app.state.base_url)
-
-
-@router.delete(
-    "/api/links/{link_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-)
-def delete_link(
-    link_id: int,
-    session: Session = Depends(get_session),
-) -> Response:
-    link = session.get(Link, link_id)
-    if link is None:
-        raise_link_not_found()
-    session.delete(link)
-    session.commit()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@router.get("/fail")
-def fail():
-    raise HTTPException(status_code=400, detail="Something went wrong?")
-
-
-@router.get("/sentry-debug")
-def trigger_error():
-    """
-    Эндпоинт для тестирования интеграции Sentry.
-    Генерирует ZeroDivisionError для проверки отправки ошибок.
-    """
-    return 1 / 0
-
-
 def create_app(
     *,
     database_url: str | None = None,
@@ -300,7 +91,9 @@ def create_app(
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["*"],
     )
-    application.include_router(router)
+    application.include_router(ping_router)
+    application.include_router(links_router)
+    application.include_router(debug_router)
     return application
 
 
