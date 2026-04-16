@@ -131,6 +131,26 @@ def test_get_link_by_id_returns_404_for_unknown_id(client):
     assert response.json() == NOT_FOUND_RESPONSE
 
 
+def test_redirect_by_short_name(client):
+    create_link(
+        client=client,
+        original_url="https://example.com/long-url",
+        short_name="exmpl",
+    )
+
+    response = client.get("/r/exmpl", follow_redirects=False)
+
+    assert response.status_code == 307
+    assert response.headers["location"] == "https://example.com/long-url"
+
+
+def test_redirect_by_short_name_returns_404_for_unknown_short_name(client):
+    response = client.get("/r/unknown", follow_redirects=False)
+
+    assert response.status_code == 404
+    assert response.json() == NOT_FOUND_RESPONSE
+
+
 def test_update_link(client):
     created_link = create_link(
         client=client,
